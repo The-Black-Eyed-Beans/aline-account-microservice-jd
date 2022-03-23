@@ -1,7 +1,11 @@
 def gv
 
 pipeline {
-  agent any
+  agent {
+    node {
+      label "worker-one"
+    }
+  }
 
   tools {
     maven 'Maven'
