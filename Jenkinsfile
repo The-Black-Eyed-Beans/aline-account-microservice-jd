@@ -21,16 +21,11 @@ pipeline {
   }
 
   stages {
-    stage("init") {
-      steps {
-        checkout([$class: 'GitSCM', branches: [[name: '*/dev']], extensions: [], userRemoteConfigs: [[credentialsId: '8144cd2a-3eab-4735-948a-7ec9e898acc4', url: 'https://github.com/The-Black-Eyed-Beans/aline-bank-microservice-jd.git']]])
-      }
-    }
     stage("Test") {
       steps {
         script {
           if (params.IS_TESTING) {
-            sh "mvn clean test -Dmaven.test.failure.ignore=true"
+            sh "mvn clean test"
           }
         }
       } 
