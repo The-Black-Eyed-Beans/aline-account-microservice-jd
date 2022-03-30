@@ -16,7 +16,7 @@ pipeline {
     AWS_ACCOUNT_ID = credentials("AWS_ACCOUNT_ID")
     AWS_PROFILE = credentials("AWS_PROFILE")
     COMMIT_HASH = "${sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()}"
-    DOCKER_IMAGE = "aacount"
+    DOCKER_IMAGE = "account"
     ECR_REGION = credentials("AWS_REGION")
   }
 
