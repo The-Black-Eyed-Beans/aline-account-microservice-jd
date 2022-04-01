@@ -2,48 +2,51 @@ version: "3.9"
 
 x-aws-vpc: ${VPC}
 x-aws-cluster: ${CLUSTER}
+x-aws-loadbalancer: ${LOAD_BALANCER}
 
 services:
   account-microservice:
     image: $AWS_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/account-microservice-jd:latest
-    networks:
-      - default
+    ports:
+      - target: ${PORT_ACCOUNT}
+        x-aws-protocol: http
     secrets:
       - MYSQL_USER
       - MYSQL_PASSWORD
       - MYSQL_DATABASE
-      - MYSQL_HOST
       - MYSQL_PORT
+      - MYSQL_HOST
       - ENCRYPT_SECRET_KEY
       - JWT_SECRET_KEY
     environment:
-      - APP_PORT=${APP_PORT}
+      - APP_PORT=${PORT_ACCOUNT}
       - WAIT_TIME=${WAIT_TIME}
-networks:
-  default:
-    external: true
-    name: ${SECUTIRY_GROUP}
+    deploy:
+      resources:
+        reservations:
+          memory: 1Gb
+          cpus: "1"
 secrets:
   MYSQL_USER:
-    name: ${MYSQL_USER_ARN}
+    name: ${ARN_MYSQL_USER}
     external: true
   MYSQL_PASSWORD:
-    name: ${MYSQL_PASSWORD_ARN}
+    name: ${ARN_MYSQL_PASSWORD}
     external: true
   MYSQL_DATABASE:
-    name: ${MYSQL_DATABASE_ARN}
+    name: ${ARN_MYSQL_DATABASE}
     external: true
   MYSQL_PORT:
-    name: ${MYSQL_PORT_ARN}
+    name: ${ARN_MYSQL_PORT}
     external: true
   MYSQL_HOST:
-    name: ${MYSQL_HOST_ARN}
+    name: ${ARN_MYSQL_HOST}
     external: true
   ENCRYPT_SECRET_KEY:
-    name: ${ENCRYPT_SECRET_KEY_ARN}
+    name: ${ARN_ENCRYPT_SECRET_KEY}
     external: true
   JWT_SECRET_KEY:
-    name: ${JWT_SECRET_KEY_ARN}
+    name: ${ARN_JWT_SECRET_KEY}
     external: true
 
 x-aws-cloudformation:
@@ -53,4 +56,10 @@ x-aws-cloudformation:
         NetworkConfiguration:
           AwsvpcConfiguration:
             Subnets:
-              - ${SUBNET}
+              - ${SUBNET_ONE}
+              - ${SUBNET_TWO}
+    Accountmicroservice8072TargetGroup:
+      Properties:
+        HealthCheckPath: /health
+        Matcher:
+          HttpCode: 200-499
