@@ -40,7 +40,7 @@ pipeline {
     }   
     stage("Package Artifact") {
       steps {
-        sh "mvn package"
+        sh "mvn package -DskipTests"
       }
     } 
     stage("SonarQube") {
