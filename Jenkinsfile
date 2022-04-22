@@ -14,6 +14,7 @@ pipeline {
   }
   environment {
     A_PASSWORD = credentials("A_PASSWORD")
+    A_URI = credentials("A_URI")
     A_URL = credentials("A_URL")
     A_USER = credentials("A_USER")
     AWS_ACCOUNT_ID = credentials("AWS_ACCOUNT_ID")
@@ -66,6 +67,7 @@ pipeline {
     stage("Upstream to Artifactory") {
       steps {
           upstreamToArtifactory()
+          sh "mvn deploy"
       }
     }
     stage("Fetch Environment Variables"){
@@ -111,12 +113,11 @@ def getIsECS() {
 def upstreamToArtifactory() {
   if (params.IS_DEPLOYING) {
     sh "docker context use default"
-    sh "docker login -u $A_USER -p $A_PASSWORD $A_URL"
-    sh 'docker tag $DOCKER_IMAGE:latest $A_URL/docker-local/$DOCKER_IMAGE:$COMMIT_HASH'
-    sh 'docker tag $DOCKER_IMAGE:latest $A_URL/docker-local/$DOCKER_IMAGE:latest'
-    sh 'docker push $A_URL/docker-local/$DOCKER_IMAGE:latest'
-    sh 'docker push $A_URL/docker-local/$DOCKER_IMAGE:$COMMIT_HASH'
-    sh 'mvn deploy'
+    sh 'docker login -u $A_USER -p $A_PASSWORD $A_URI'
+    sh 'docker tag $DOCKER_IMAGE:latest $A_URI/docker-local/$DOCKER_IMAGE:$COMMIT_HASH'
+    sh 'docker tag $DOCKER_IMAGE:latest $A_URI/docker-local/$DOCKER_IMAGE:latest'
+    sh 'docker push $A_URI/docker-local/$DOCKER_IMAGE:latest'
+    sh 'docker push $A_URI/docker-local/$DOCKER_IMAGE:$COMMIT_HASH'
   }
 }
 
