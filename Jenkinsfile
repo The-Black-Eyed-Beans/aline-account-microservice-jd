@@ -13,6 +13,9 @@ pipeline {
     booleanParam(name: "IS_TESTING", defaultValue: "true", description: "Set to false to skip testing, default true!")
   }
   environment {
+    A_PASSWORD = credentials("A_PASSWORD")
+    A_URL = credentials("A_URL")
+    A_USER = credentials("A_USER")
     AWS_ACCOUNT_ID = credentials("AWS_ACCOUNT_ID")
     AWS_PROFILE = credentials("AWS_PROFILE")
     CLUSTER_NAME = credentials("CLUSTER_NAME")
@@ -60,6 +63,11 @@ pipeline {
         upstreamToECR()
       }
     }
+    stage("Upstream to Artifactory") {
+      steps {
+          upstreamToArtifactory()
+      }
+    }
     stage("Fetch Environment Variables"){
       steps {
         sh "aws lambda invoke --function-name getServiceEnv env --profile $AWS_PROFILE"
@@ -74,7 +82,7 @@ pipeline {
             sh "docker compose -p $DOCKER_IMAGE-jd --env-file service.env up -d"
           } else  {
             sh "aws eks update-kubeconfig --name=$CLUSTER_NAME --region=us-east-2"
-            sh "kubectl rollout restart deploy account-deployment -n backend"
+            sh "kubectl rollout restart deploy $DOCKER_IMAGE-deployment -n backend"
           }
         }
       }
@@ -98,6 +106,18 @@ def createEnvFile() {
 
 def getIsECS() {
     return sh(returnStdout: true, script: """aws secretsmanager  get-secret-value --secret-id prod/infrastructure/config --region us-east-2 | jq -r '.["SecretString"]' | jq -r '.["is_ecs"]'""").trim().toBoolean()
+}
+
+def upstreamToArtifactory() {
+  if (params.IS_DEPLOYING) {
+    sh "docker context use default"
+    sh "docker login -u $A_USER -p $A_PASSWORD $A_URL"
+    sh 'docker tag $DOCKER_IMAGE:latest $A_URL/docker-local/$DOCKER_IMAGE:$COMMIT_HASH'
+    sh 'docker tag $DOCKER_IMAGE:latest $A_URL/docker-local/$DOCKER_IMAGE:latest'
+    sh 'docker push $A_URL/docker-local/$DOCKER_IMAGE:latest'
+    sh 'docker push $A_URL/docker-local/$DOCKER_IMAGE:$COMMIT_HASH'
+    sh 'mvn deploy'
+  }
 }
 
 def upstreamToECR() {
