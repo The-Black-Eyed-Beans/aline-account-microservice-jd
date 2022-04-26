@@ -67,7 +67,6 @@ pipeline {
     stage("Upstream to Artifactory") {
       steps {
           upstreamToArtifactory()
-          sh "mvn deploy"
       }
     }
     stage("Fetch Environment Variables"){
